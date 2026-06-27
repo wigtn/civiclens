@@ -7,6 +7,7 @@
 
 import { randomBytes } from 'node:crypto';
 import { OPENAI, SESSION_LIMITS, EK_TTL_SEC, isMockOpenAI } from '@/lib/config';
+import { REALTIME_TOOLS, getSystemInstruction } from '@/lib/ai/realtime-tools';
 import type { LangCode } from '@contract/api';
 
 export interface MintedEk {
@@ -30,7 +31,7 @@ function mockEk(): MintedEk {
  * SDK 버전 차이를 피하기 위해 REST 엔드포인트를 직접 호출한다.
  * @throws Error  발급 실패(라우트가 SESSION_CREATE_FAILED 로 매핑)
  */
-export async function mintEphemeralKey(_language: LangCode): Promise<MintedEk> {
+export async function mintEphemeralKey(language: LangCode): Promise<MintedEk> {
   if (isMockOpenAI()) return mockEk();
 
   // 현행 GA 엔드포인트: POST /v1/realtime/client_secrets
@@ -47,6 +48,9 @@ export async function mintEphemeralKey(_language: LangCode): Promise<MintedEk> {
         model: OPENAI.realtimeModel,
         audio: { output: { voice: OPENAI.voice } },
         max_output_tokens: SESSION_LIMITS.maxOutputTokens,
+        // C 도메인: 민원 도우미 페르소나(환각 가드) + Function Calling 6종 주입
+        instructions: getSystemInstruction(language),
+        tools: REALTIME_TOOLS,
       },
     }),
   });

@@ -66,7 +66,8 @@ async function main() {
       continue;
     }
     const img = readFileSync(path, 'base64');
-    const recognized = await recognizeText(img);
+    const recognized = await recognizeWithRetry(img);
+    await sleep(Number(process.env.BENCH_DELAY_MS ?? 1500)); // throttle (저티어 RPM 대비)
     const s = scoreDoc(recognized, doc.goldTexts);
     recallSum += s.recall;
     evaluated++;
@@ -102,6 +103,23 @@ async function main() {
 }
 
 const round = (n: number) => Math.round(n * 1000) / 1000;
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/** 429(rate_limit) 시 지수 백오프 재시도. 저티어 OpenAI 키 대응. */
+async function recognizeWithRetry(img: string): Promise<string[]> {
+  for (let attempt = 0; attempt < 6; attempt++) {
+    try {
+      return await recognizeText(img);
+    } catch (e: any) {
+      const is429 = e?.status === 429 || e?.code === 'rate_limit_exceeded';
+      if (!is429 || attempt === 5) throw e;
+      const wait = 20000 * (attempt + 1);
+      console.log(`  ⏳ rate limit → ${wait / 1000}s 대기 후 재시도`);
+      await sleep(wait);
+    }
+  }
+  return [];
+}
 
 main().catch((e) => {
   console.error('[benchmark] 실패:', e);
