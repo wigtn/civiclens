@@ -48,6 +48,10 @@ async function main() {
     return;
   }
 
+  // BENCH_LIMIT: 빠른 proof용 상한(예: 저티어→Tier1 직후 12건만)
+  const limit = Number(process.env.BENCH_LIMIT ?? evalDocs.length);
+  evalDocs = evalDocs.slice(0, limit);
+
   const imgIndex = indexImages(IMAGES_DIR);
   if (imgIndex.size === 0) {
     console.log(`[benchmark] 원천 이미지 없음: ${IMAGES_DIR} (88 Validation 원천 7GB 다운로드 필요)`);
