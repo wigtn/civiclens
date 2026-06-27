@@ -1,28 +1,46 @@
 // ============================================================
 // server/lib/domain/recognize-document.ts — 👤 C
-// gpt-4o 비전으로 한국 공문서/안내문/키오스크 화면을 분류 + 칸 구조 추출.
-// B의 /api/v1/recognize 라우트와 C의 run-benchmark.ts가 "동일 함수"를 공유.
-// FR-014 환각 가드: confidence<0.5면 호출측이 단정 금지 처리.
+// 제품 본연: 사용자가 비춘 한국 공문서/무인민원기 화면을 인식하고
+// 채워야 할 칸(필드)을 추출해 모국어 힌트와 함께 반환.
+// (주제: 서류 인식 + 칸별 작성법 안내)
+// B의 /api/v1/recognize 라우트와 라이브 tool-call이 공유.
+// FR-014 환각 가드: confidence<0.5면 서식명을 단정하지 않음.
+//
+// ※ AI Hub 공공행정문서 OCR 라벨은 "제품 인식"을 바꾸지 않는다.
+//   그건 신뢰성 입증 벤치마크(server/lib/domain/benchmark/*)에서만 사용.
 // ============================================================
 
 import type { LangCode, RecognizeResponse } from '@contract/api';
 import { getOpenAI, MODELS } from '../ai/openai.js';
 
-/** 데모/벤치마크 대상 문서종류 라벨(AI Hub 공공행정문서 OCR 기준으로 확장). */
+/** 자주 만나는 민원 서식(라이브 안내 대상). 목록 밖이면 docType은 자유서술로. */
 export const DOC_TYPES = [
   { id: 'resident_registration_move', ko: '전입신고서' },
   { id: 'foreigner_registration', ko: '외국인등록 신청서' },
+  { id: 'resident_cert_issue', ko: '주민등록 등·초본 발급신청' },
   { id: 'health_insurance', ko: '건강보험 관련 서식' },
   { id: 'seal_certificate', ko: '인감증명 관련 서식' },
   { id: 'kiosk_screen', ko: '무인민원발급기 화면' },
+  { id: 'other_public_document', ko: '기타 공문서/안내문' },
   { id: 'unknown', ko: '미상' },
 ] as const;
 
-const SYSTEM = `You classify Korean public/administrative documents from an image.
-Return STRICT JSON only. Choose docTypeId from the provided list. If the image is blurry,
-cropped, or you are not sure, choose "unknown" and set confidence below 0.5 — never guess a
-specific form from superficial similarity. fields = the labeled blanks the user must fill,
-with a short hint in the requested language.`;
+const SYSTEM = `You are the recognition engine for a civil-affairs companion that helps foreign
+residents and digitally vulnerable users fill out KOREAN public documents and use unmanned civil
+kiosks. From the image, identify the document/form (or kiosk screen) and extract the fields the
+user must fill in.
+
+Return STRICT JSON only:
+{"docType","docTypeId","confidence","fields":[{"label","hint"}],"isKiosk"}
+- docType: the specific Korean form/notice name as best you can tell (free text, e.g. "전입신고서").
+- docTypeId: choose from the provided id list if it matches, else "other_public_document".
+- fields: the labeled blanks the user must complete; each "hint" = a one-line how-to-fill note in
+  the requested language.
+- isKiosk: true if this is an unmanned civil kiosk screen (then fields = the buttons/menus to press).
+
+Anti-hallucination (critical): if the image is blurry, cropped, or you are unsure, set
+confidence below 0.5 and do NOT assert a specific form — describe only what is visible. Never
+default to a common form from superficial similarity.`;
 
 interface RecognizeOptions {
   language: LangCode;
@@ -32,7 +50,7 @@ export async function recognizeDocument(
   imageBase64: string,
   { language }: RecognizeOptions,
 ): Promise<RecognizeResponse> {
-  const list = DOC_TYPES.map((d) => `${d.id} (${d.ko})`).join(', ');
+  const idList = DOC_TYPES.map((d) => `${d.id} (${d.ko})`).join(', ');
   const dataUrl = imageBase64.startsWith('data:')
     ? imageBase64
     : `data:image/jpeg;base64,${imageBase64}`;
@@ -46,13 +64,7 @@ export async function recognizeDocument(
       {
         role: 'user',
         content: [
-          {
-            type: 'text',
-            text:
-              `docTypeId candidates: [${list}].\n` +
-              `Respond as JSON: {"docType","docTypeId","confidence",` +
-              `"fields":[{"label","hint"}],"isKiosk"}. hint language = ${language}.`,
-          },
+          { type: 'text', text: `docTypeId candidates: [${idList}]. hint language = ${language}.` },
           { type: 'image_url', image_url: { url: dataUrl } },
         ],
       },
@@ -62,7 +74,6 @@ export async function recognizeDocument(
   const raw = res.choices[0]?.message?.content ?? '{}';
   const parsed = JSON.parse(raw) as Partial<RecognizeResponse>;
 
-  // 정규화 + 가드
   const known = new Set<string>(DOC_TYPES.map((d) => d.id));
   const docTypeId = parsed.docTypeId && known.has(parsed.docTypeId) ? parsed.docTypeId : 'unknown';
   const confidence = clamp01(parsed.confidence ?? 0);
