@@ -21,9 +21,10 @@ interface NormalizedTerm {
 }
 
 // TODO(C): AIHUB_DATA_DIR의 실제 파일 포맷에 맞춰 파서 구현.
-//  - 공공행정문서 OCR 용어 → source:'admin_term'
-//  - 국내 법률 다국어 번역(5개국어) → source:'legal_translation'
-//  - 관광 POI 설명 → source:'office' (인근 안내용으로 재활용 시)
+//  - 공공행정문서 OCR 행정용어 → source:'admin_term'
+//  - 국내 법률 다국어 번역(5개국어, dataSetSn=71720) → source:'legal_translation'
+//  - 한국어-다국어 말뭉치(dataSetSn=71498) → source:'multilingual_corpus' (일반 문장 번역 보강)
+// ⚠️ 관광 POI / 인근 창구(discover_office)는 RAG 대상 아님 — offices/nearby(B)에서 처리.
 async function loadNormalized(): Promise<NormalizedTerm[]> {
   // 임시 시드(파이프라인 검증용). 실제 적재 전까지 데모용 소량.
   return [
