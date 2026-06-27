@@ -5,6 +5,7 @@
   "comment": "Node 측(백엔드 server/ + scripts/) 워크스페이스. 모바일은 mobile/ 자체 package.json. ⚠️ 이 파일은 Day-0 공유 인프라 — main에 동기화 권장.",
   "scripts": {
     "type-check": "tsc --noEmit",
+    "demo": "tsx scripts/demo.ts",
     "ingest": "tsx scripts/ingest-aihub.ts",
     "eval:build": "tsx scripts/build-eval-set.ts",
     "benchmark": "tsx scripts/run-benchmark.ts"
