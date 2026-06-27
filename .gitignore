@@ -1,0 +1,55 @@
+# --- 로컬 작업 규약 (커밋 제외 요청) ---
+AGENTS.md
+
+# --- 비밀/환경 ---
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# --- 의존성 ---
+node_modules/
+.pnp.*
+.yarn/*
+
+# --- 빌드 산출물 ---
+dist/
+build/
+.next/
+out/
+*.tsbuildinfo
+
+# --- Expo / React Native (mobile/) ---
+.expo/
+.expo-shared/
+mobile/.expo/
+*.orig.*
+web-build/
+ios/
+android/
+*.jks
+*.p8
+*.p12
+*.mobileprovision
+
+# --- 데이터 / 인덱스 / 평가셋 (대용량·라이선스) ---
+data/aihub/
+*.index
+*.faiss
+vectorstore/
+scripts/.cache/
+
+# --- 로그 / OS / 에디터 ---
+*.log
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# --- 도구 런타임 ---
+.claude/
+coverage/
