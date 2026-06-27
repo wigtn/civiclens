@@ -61,7 +61,9 @@ export interface CreateSessionResponse {
 }
 
 // ---- POST /api/v1/rag/query (C) ------------------------------------------
-export type RagSource = 'admin_term' | 'legal_translation' | 'office';
+// AI Hub RAG grounding 소스. 인근 창구(discover_office)는 RAG가 아니라
+// 위치검색 API(offices/nearby)이므로 여기 포함하지 않는다.
+export type RagSource = 'admin_term' | 'legal_translation' | 'multilingual_corpus';
 export interface RagQueryRequest {
   query: string;
   targetLang: LangCode;
