@@ -1,47 +1,88 @@
 // ============================================================
-// ⚠️ STUB — 이 파일의 실제 소유자는 C (AI Hub Data & Intelligence) 입니다.
-// B 스트림 언블락용 임시 구현. 통합 시 C의 gpt-4o 비전 분류 구현으로
-// 통째로 교체됩니다(시그니처는 shared/contract 로 고정).
-// PARALLEL_WORK_PLAN.md §2 "C의 recognize-document 는 stub 두고 진행".
-// 출처: PRD §5.1 /recognize, FR-003/FR-014
+// server/lib/domain/recognize-document.ts — 👤 C (B 라우트와 통합)
+// 제품 본연: 사용자가 비춘 한국 공문서/무인민원기 화면을 인식하고
+// 채워야 할 칸(필드)을 추출해 모국어 힌트와 함께 반환.
+// (주제: 서류 인식 + 칸별 작성법 안내)
+//
+// 시그니처는 shared/contract(RecognizeRequest)로 고정 — B의
+// /app/api/v1/recognize/route.ts 가 recognizeDocument({imageBase64,language}) 호출.
+// FR-014 환각 가드: confidence<0.5면 서식명을 단정하지 않음(라우트가 422 처리).
+//
+// ※ AI Hub 공공행정문서 OCR 라벨은 "제품 인식"을 바꾸지 않는다.
+//   그건 신뢰성 입증 벤치마크(server/lib/domain/benchmark/*)에서만 사용.
 // ============================================================
 
 import type { RecognizeRequest, RecognizeResponse } from '@contract/api';
+import { getOpenAI, MODELS } from '../ai/openai.js';
 
-// 데모용 결정적 분류 결과(이미지 크기 기반으로 약간의 변주).
-const SAMPLE_DOCS: Array<Omit<RecognizeResponse, 'confidence' | 'isKiosk'>> = [
-  {
-    docType: '전입신고서',
-    docTypeId: 'resident_registration_move',
-    fields: [
-      { label: '세대주', hint: '집의 대표자(주민등록상 대표) 이름을 적습니다.' },
-      { label: '전입사유', hint: '이사 온 이유를 선택/기재합니다.' },
-      { label: '새 주소', hint: '이사 온 곳의 도로명 주소를 적습니다.' },
-    ],
-  },
-  {
-    docType: '외국인등록 신청서',
-    docTypeId: 'foreigner_registration',
-    fields: [
-      { label: '체류자격', hint: '비자 종류(예: D-2, E-7)를 적습니다.' },
-      { label: '체류지', hint: '한국에서 거주하는 주소를 적습니다.' },
-    ],
-  },
-];
+/** 자주 만나는 민원 서식(라이브 안내 대상). 목록 밖이면 docType은 자유서술로. */
+export const DOC_TYPES = [
+  { id: 'resident_registration_move', ko: '전입신고서' },
+  { id: 'foreigner_registration', ko: '외국인등록 신청서' },
+  { id: 'resident_cert_issue', ko: '주민등록 등·초본 발급신청' },
+  { id: 'health_insurance', ko: '건강보험 관련 서식' },
+  { id: 'seal_certificate', ko: '인감증명 관련 서식' },
+  { id: 'kiosk_screen', ko: '무인민원발급기 화면' },
+  { id: 'other_public_document', ko: '기타 공문서/안내문' },
+  { id: 'unknown', ko: '미상' },
+] as const;
 
-/**
- * 카메라 프레임을 문서종류로 분류한다.
- * @returns RecognizeResponse — confidence < 0.5 시 호출측(B 라우트)이 환각 가드 적용(FR-014)
- */
+const SYSTEM = `You are the recognition engine for a civil-affairs companion that helps foreign
+residents and digitally vulnerable users fill out KOREAN public documents and use unmanned civil
+kiosks. From the image, identify the document/form (or kiosk screen) and extract the fields the
+user must fill in.
+
+Return STRICT JSON only:
+{"docType","docTypeId","confidence","fields":[{"label","hint"}],"isKiosk"}
+- docType: the specific Korean form/notice name as best you can tell (free text, e.g. "전입신고서").
+- docTypeId: choose from the provided id list if it matches, else "other_public_document".
+- fields: the labeled blanks the user must complete; each "hint" = a one-line how-to-fill note in
+  the requested language.
+- isKiosk: true if this is an unmanned civil kiosk screen (then fields = the buttons/menus to press).
+
+Anti-hallucination (critical): if the image is blurry, cropped, or you are unsure, set
+confidence below 0.5 and do NOT assert a specific form — describe only what is visible. Never
+default to a common form from superficial similarity.`;
+
 export async function recognizeDocument(req: RecognizeRequest): Promise<RecognizeResponse> {
-  // STUB: 실제 gpt-4o 비전 호출 대신, 입력 길이로 결정적 샘플 선택.
-  const idx = req.imageBase64.length % SAMPLE_DOCS.length;
-  const doc = SAMPLE_DOCS[idx];
-  // 데모: 빈/매우 짧은 이미지는 저신뢰로 → 환각 가드 경로 검증 가능
-  const confidence = req.imageBase64.length < 64 ? 0.3 : 0.92;
+  const { imageBase64, language } = req;
+  const idList = DOC_TYPES.map((d) => `${d.id} (${d.ko})`).join(', ');
+  const dataUrl = imageBase64.startsWith('data:')
+    ? imageBase64
+    : `data:image/jpeg;base64,${imageBase64}`;
+
+  const res = await getOpenAI().chat.completions.create({
+    model: MODELS.vision,
+    temperature: 0,
+    response_format: { type: 'json_object' },
+    messages: [
+      { role: 'system', content: SYSTEM },
+      {
+        role: 'user',
+        content: [
+          { type: 'text', text: `docTypeId candidates: [${idList}]. hint language = ${language}.` },
+          { type: 'image_url', image_url: { url: dataUrl } },
+        ],
+      },
+    ],
+  });
+
+  const raw = res.choices[0]?.message?.content ?? '{}';
+  const parsed = JSON.parse(raw) as Partial<RecognizeResponse>;
+
+  const known = new Set<string>(DOC_TYPES.map((d) => d.id));
+  const docTypeId = parsed.docTypeId && known.has(parsed.docTypeId) ? parsed.docTypeId : 'unknown';
+  const confidence = clamp01(parsed.confidence ?? 0);
+
   return {
-    ...doc,
+    docType: parsed.docType ?? '미상',
+    docTypeId: confidence < 0.5 ? 'unknown' : docTypeId, // FR-014: 저신뢰는 단정 금지
     confidence,
-    isKiosk: false,
+    fields: Array.isArray(parsed.fields) ? parsed.fields : [],
+    isKiosk: parsed.isKiosk ?? docTypeId === 'kiosk_screen',
   };
+}
+
+function clamp01(n: number): number {
+  return Math.max(0, Math.min(1, Number.isFinite(n) ? n : 0));
 }
