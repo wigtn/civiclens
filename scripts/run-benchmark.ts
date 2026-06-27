@@ -79,7 +79,7 @@ async function main() {
     b.sum += s.recall;
     b.n++;
     perCat.set(doc.categoryId, b);
-    if (evaluated % 10 === 0) console.log(`  ...${evaluated}/${evalDocs.length}`);
+    console.log(`  ${evaluated}/${evalDocs.length} [${doc.categoryId}] recall=${(s.recall * 100).toFixed(0)}% (matched ${s.matched}/${s.goldN})`);
   }
 
   if (evaluated === 0) {
