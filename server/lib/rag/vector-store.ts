@@ -4,6 +4,8 @@
 // 운영 전환 시 PgVectorStore 등으로 교체(인터페이스 유지).
 // ============================================================
 
+import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { dirname } from 'node:path';
 import type { LangCode, RagSource } from '@contract/api';
 
 export interface VectorRecord {
@@ -62,11 +64,32 @@ export class InMemoryVectorStore implements VectorStore {
   }
 }
 
+/** 인덱스 파일(JSON) 저장 — ingest 스크립트가 호출. */
+export function saveIndex(records: VectorRecord[], path = indexPath()): void {
+  mkdirSync(dirname(path), { recursive: true });
+  writeFileSync(path, JSON.stringify(records), 'utf8');
+}
+
+function indexPath(): string {
+  return process.env.RAG_INDEX_PATH ?? './data/rag/index.json';
+}
+
 let _store: VectorStore | null = null;
 
+/**
+ * 벡터스토어 반환. 최초 호출 시 RAG_INDEX_PATH(JSON)이 있으면 로드한다
+ * → ingest 프로세스와 서버 프로세스가 동일 인덱스를 공유(in-memory 한계 보완).
+ */
 export function getVectorStore(): VectorStore {
   if (_store) return _store;
-  // TODO: VECTOR_STORE=postgres 시 PgVectorStore로 분기
-  _store = new InMemoryVectorStore();
+  const store = new InMemoryVectorStore();
+  try {
+    const records = JSON.parse(readFileSync(indexPath(), 'utf8')) as VectorRecord[];
+    // 동기 로드: upsert는 async지만 내부는 동기 → 즉시 반영
+    void store.upsert(records);
+  } catch {
+    /* 인덱스 파일 없음 → 빈 스토어(쿼리 시 NO_MATCH) */
+  }
+  _store = store;
   return _store;
 }
