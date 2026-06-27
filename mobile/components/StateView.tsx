@@ -1,7 +1,7 @@
 // StateView — loading/empty/error/no-permission 공통 상태 표현(PRD §5.4.1).
 import React from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
-import { colors, fontSize, radius, spacing } from '@/theme';
+import { colors, fontSize, radius, shadows, spacing } from '@/theme';
 
 export type ViewState = 'loading' | 'empty' | 'error' | 'no-permission' | 'success';
 
@@ -59,6 +59,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.xl,
     borderRadius: radius.pill,
+    ...shadows.cta,
   },
-  buttonText: { color: colors.primaryText, fontSize: fontSize.md, fontWeight: '700' },
+  buttonText: { color: colors.primaryText, fontSize: fontSize.md, fontWeight: '800' },
 });

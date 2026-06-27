@@ -10,11 +10,13 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <I18nProvider>
-        <StatusBar style="light" />
+        <StatusBar style="dark" />
         <Stack
           screenOptions={{
-            headerStyle: { backgroundColor: colors.surface },
+            headerStyle: { backgroundColor: colors.bg },
             headerTintColor: colors.text,
+            headerTitleStyle: { fontWeight: '800' },
+            headerShadowVisible: false,
             contentStyle: { backgroundColor: colors.bg },
           }}
         >

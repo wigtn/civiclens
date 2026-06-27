@@ -34,14 +34,16 @@ export function LanguagePicker({ value, onChange }: Props) {
 const styles = StyleSheet.create({
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, justifyContent: 'center' },
   chip: {
+    minWidth: 92,
+    alignItems: 'center',
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.lg,
     borderRadius: radius.pill,
     borderWidth: 2,
     borderColor: colors.border,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.bg,
   },
   chipSelected: { borderColor: colors.primary, backgroundColor: colors.surfaceAlt },
-  label: { color: colors.textMuted, fontSize: fontSize.md, fontWeight: '600' },
-  labelSelected: { color: colors.text },
+  label: { color: colors.textMuted, fontSize: fontSize.md, fontWeight: '700' },
+  labelSelected: { color: colors.primary },
 });

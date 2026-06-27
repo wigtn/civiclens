@@ -24,7 +24,8 @@ import type {
 import * as mock from './mock';
 
 const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:3000';
-const USE_MOCK = process.env.EXPO_PUBLIC_USE_MOCK !== '0';
+/** mock 모드(기본 ON) — '0' 일 때만 실서버. realtime transport 토글에도 사용. */
+export const USE_MOCK = process.env.EXPO_PUBLIC_USE_MOCK !== '0';
 
 /** contract ApiError 를 그대로 들고 다니는 예외(화면이 code 로 분기). */
 export class ApiClientError extends Error {

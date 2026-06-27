@@ -17,7 +17,7 @@ export function ConnectionOverlay({ status, connectingLabel, errorLabel }: Props
   const isError = status === 'error';
   return (
     <View style={styles.overlay} accessibilityRole="alert">
-      {isError ? <Text style={styles.icon}>⚠️</Text> : <ActivityIndicator size="large" color={colors.text} />}
+      {isError ? <Text style={styles.icon}>⚠️</Text> : <ActivityIndicator size="large" color={colors.onOverlay} />}
       <Text style={styles.label}>{isError ? errorLabel : connectingLabel}</Text>
     </View>
   );
@@ -33,5 +33,5 @@ const styles = StyleSheet.create({
     padding: spacing.xl,
   },
   icon: { fontSize: 44 },
-  label: { color: colors.text, fontSize: fontSize.md, textAlign: 'center' },
+  label: { color: colors.onOverlay, fontSize: fontSize.md, fontWeight: '600', textAlign: 'center' },
 });
