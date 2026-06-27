@@ -1,0 +1,43 @@
+# CivicLens 모바일 E2E (Maestro) — Expo Go + mock 모드 전 플로우.
+# 실행: Metro 켠 뒤(EXPO_PUBLIC_USE_MOCK=1) 부팅된 시뮬레이터에서
+#   export PATH="$HOME/.maestro/bin:$PATH"
+#   maestro test mobile/.maestro/civiclens-e2e.yaml
+# 녹화: xcrun simctl io booted recordVideo out.mp4 & 로 감싸 실행.
+appId: host.exp.Exponent
+---
+# 1) 랜딩 — Expo Go 로 프로젝트 로드
+- openLink: "exp://127.0.0.1:8082"
+- assertVisible: "시작하기"
+- assertVisible: "언어를 선택하세요"
+- takeScreenshot: 01-landing
+
+# 2) 세션 진입 (mock — MOCK 배지)
+- tapOn: "시작하기"
+- assertVisible: "MOCK"
+- takeScreenshot: 02-session
+
+# 3) 촬영 → 서류 인식 → 민원 여정 버튼 등장 (A)
+- tapOn:
+    point: "50%,72%"   # 셔터(텍스트 없음) — 위치 탭
+- assertVisible: "민원 여정"
+- takeScreenshot: 03-recognized
+
+# 4) B — 근거 있는 질문 → ✓ 근거 배지
+- tapOn: "세대주가 뭐예요?"
+- assertVisible: "근거"
+- takeScreenshot: 04-grounded
+
+# 5) B — 주관 질문 → ⚠ 추정 + 가드
+- tapOn: "이 줄 안 써도 돼요?"
+- assertVisible: "추정"
+- takeScreenshot: 05-estimated
+
+# 6) A — 민원 여정 타임라인
+- tapOn: "민원 여정"
+- assertVisible: "확정일자 받기"
+- takeScreenshot: 06-journey
+- tapOn: "닫기"
+
+# 7) 종료 → 기록 목록
+- tapOn: "종료"
+- takeScreenshot: 07-records
