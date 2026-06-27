@@ -116,8 +116,9 @@ describe('GET /records & /records/:id: 소유권', () => {
     const recordId = created.success ? created.data.recordId : '';
 
     const listRes = await GET(getReq(token) as never);
-    const list = (await listRes.json()) as ApiResponse<{ records: RecordEntry[] }>;
-    expect(list.success && list.data.records.length).toBe(1);
+    const list = (await listRes.json()) as ApiResponse<RecordEntry[]>;
+    // api-client(Promise<RecordEntry[]>)·my.tsx FlatList 와 일치하도록 data 는 배열
+    expect(list.success && Array.isArray(list.data) && list.data.length).toBe(1);
 
     const detailRes = await GET_DETAIL(getReq(token) as never, {
       params: Promise.resolve({ id: recordId }),
@@ -138,5 +139,26 @@ describe('GET /records & /records/:id: 소유권', () => {
       params: Promise.resolve({ id: recordId }),
     });
     expect(detailRes.status).toBe(403);
+  });
+
+  it('토큰 없이도 목록·상세 조회 가능(mobile api-client 연동 경로)', async () => {
+    const token = issueSessionToken(SESSION_ID);
+    const createRes = await POST(
+      postReq(token, { sessionId: SESSION_ID, language: 'ko', visits: [{ docTypeId: 'd1' }] }) as never,
+    );
+    const created = (await createRes.json()) as ApiResponse<CreateRecordResponse>;
+    const recordId = created.success ? created.data.recordId : '';
+
+    // 목록: 토큰 미전송 → 200 + 배열
+    const listRes = await GET(getReq(null) as never);
+    const list = (await listRes.json()) as ApiResponse<RecordEntry[]>;
+    expect(listRes.status).toBe(200);
+    expect(list.success && Array.isArray(list.data)).toBe(true);
+
+    // 상세: 토큰 미전송 → 200
+    const detailRes = await GET_DETAIL(getReq(null) as never, {
+      params: Promise.resolve({ id: recordId }),
+    });
+    expect(detailRes.status).toBe(200);
   });
 });

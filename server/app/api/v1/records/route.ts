@@ -106,10 +106,11 @@ export async function POST(req: NextRequest) {
 
 export async function GET(req: NextRequest) {
   const origin = req.headers.get('origin');
+  // 로컬/게스트 데모: 세션 토큰은 선택. 있으면 해당 세션으로 스코프, 없으면 전체.
+  // (mobile api-client.listRecords 는 토큰을 전송하지 않음 — 로컬 단일 디바이스 기준)
+  // ⚠️ 프로덕션(author 클라우드, FR-009)에서는 토큰 필수 + ownerId 스코프로 강화 필요.
   const claims = verifySessionToken(extractSessionToken(req));
-  if (!claims) {
-    return fail('UNAUTHORIZED', { message: '유효한 세션 토큰이 필요합니다.', origin });
-  }
-  const entries = listRecords({ sessionId: claims.sessionId }).map(toEntry);
-  return ok({ records: entries }, { origin });
+  const entries = listRecords(claims ? { sessionId: claims.sessionId } : {}).map(toEntry);
+  // api-client 는 data 로 RecordEntry[] (배열)을 기대 → 래핑하지 않는다(my.tsx FlatList).
+  return ok(entries, { origin });
 }
