@@ -1,16 +1,18 @@
 // ============================================================
-// server/lib/domain/recognize-document.ts — 👤 C
+// server/lib/domain/recognize-document.ts — 👤 C (B 라우트와 통합)
 // 제품 본연: 사용자가 비춘 한국 공문서/무인민원기 화면을 인식하고
 // 채워야 할 칸(필드)을 추출해 모국어 힌트와 함께 반환.
 // (주제: 서류 인식 + 칸별 작성법 안내)
-// B의 /api/v1/recognize 라우트와 라이브 tool-call이 공유.
-// FR-014 환각 가드: confidence<0.5면 서식명을 단정하지 않음.
+//
+// 시그니처는 shared/contract(RecognizeRequest)로 고정 — B의
+// /app/api/v1/recognize/route.ts 가 recognizeDocument({imageBase64,language}) 호출.
+// FR-014 환각 가드: confidence<0.5면 서식명을 단정하지 않음(라우트가 422 처리).
 //
 // ※ AI Hub 공공행정문서 OCR 라벨은 "제품 인식"을 바꾸지 않는다.
 //   그건 신뢰성 입증 벤치마크(server/lib/domain/benchmark/*)에서만 사용.
 // ============================================================
 
-import type { LangCode, RecognizeResponse } from '@contract/api';
+import type { RecognizeRequest, RecognizeResponse } from '@contract/api';
 import { getOpenAI, MODELS } from '../ai/openai.js';
 
 /** 자주 만나는 민원 서식(라이브 안내 대상). 목록 밖이면 docType은 자유서술로. */
@@ -42,14 +44,8 @@ Anti-hallucination (critical): if the image is blurry, cropped, or you are unsur
 confidence below 0.5 and do NOT assert a specific form — describe only what is visible. Never
 default to a common form from superficial similarity.`;
 
-interface RecognizeOptions {
-  language: LangCode;
-}
-
-export async function recognizeDocument(
-  imageBase64: string,
-  { language }: RecognizeOptions,
-): Promise<RecognizeResponse> {
+export async function recognizeDocument(req: RecognizeRequest): Promise<RecognizeResponse> {
+  const { imageBase64, language } = req;
   const idList = DOC_TYPES.map((d) => `${d.id} (${d.ko})`).join(', ');
   const dataUrl = imageBase64.startsWith('data:')
     ? imageBase64

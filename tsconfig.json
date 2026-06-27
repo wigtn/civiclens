@@ -16,6 +16,7 @@
       "@contract/*": ["shared/contract/*"]
     }
   },
-  "include": ["server/**/*.ts", "scripts/**/*.ts", "shared/**/*.ts"],
-  "exclude": ["node_modules", "mobile"]
+  "comment": "루트 tsconfig = C의 오프라인 스크립트(scripts/) 빌드. server/는 B의 Next.js 프로젝트(server/tsconfig.json)가 담당하므로 직접 include하지 않고, scripts가 import하는 C 라이브러리(server/lib/{ai,rag,domain})만 전이적으로 검사된다.",
+  "include": ["scripts/**/*.ts", "shared/**/*.ts"],
+  "exclude": ["node_modules", "mobile", "server/app", "server/tests"]
 }
