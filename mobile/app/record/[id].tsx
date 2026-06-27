@@ -6,7 +6,7 @@ import type { RecordEntry } from '@contract/api';
 import { useI18n } from '@/i18n/context';
 import { apiClient, ApiClientError } from '@/lib/api-client';
 import { StateView } from '@/components/StateView';
-import { colors, fontSize, radius, spacing } from '@/theme';
+import { colors, fontSize, radius, shadows, spacing } from '@/theme';
 
 type Load =
   | { state: 'loading' }
@@ -73,10 +73,18 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
   content: { padding: spacing.md, gap: spacing.md },
   meta: { color: colors.textMuted, fontSize: fontSize.sm },
-  card: { backgroundColor: colors.surface, borderRadius: radius.md, padding: spacing.md, gap: spacing.sm },
-  docType: { color: colors.text, fontSize: fontSize.lg, fontWeight: '700' },
+  card: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.lg,
+    gap: spacing.sm,
+    ...shadows.card,
+  },
+  docType: { color: colors.text, fontSize: fontSize.lg, fontWeight: '800' },
   fields: { gap: spacing.xs },
-  fieldsLabel: { color: colors.textMuted, fontSize: fontSize.sm, fontWeight: '600' },
+  fieldsLabel: { color: colors.accent, fontSize: fontSize.sm, fontWeight: '700' },
   fieldItem: { color: colors.text, fontSize: fontSize.md },
   note: { color: colors.textMuted, fontSize: fontSize.md, lineHeight: fontSize.md * 1.5 },
 });

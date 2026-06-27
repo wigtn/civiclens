@@ -8,17 +8,21 @@ import type { LangCode } from '@contract/api';
 import type { LiveSessionConfig } from '@contract/realtime';
 import { useI18n } from '@/i18n/context';
 import { isSupportedLang } from '@/i18n';
+import { useAgentStrings } from '@/i18n/agent';
 import { useLiveSession } from '@/hooks/use-live-session';
-import { apiClient, ApiClientError } from '@/lib/api-client';
+import { apiClient, ApiClientError, USE_MOCK } from '@/lib/api-client';
 import { captureFrame } from '@/lib/camera';
 import { StateView } from '@/components/StateView';
 import { ConnectionOverlay } from '@/components/ConnectionOverlay';
 import { AudioVisualizer } from '@/components/AudioVisualizer';
 import { KnowledgePanel } from '@/components/KnowledgePanel';
+import { SuggestionChips } from '@/components/SuggestionChips';
+import { JourneyPanel } from '@/components/JourneyPanel';
 import { colors, fontSize, radius, spacing } from '@/theme';
 
 export default function SessionScreen() {
   const { t, lang: ctxLang } = useI18n();
+  const a = useAgentStrings();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ lang?: string }>();
@@ -28,6 +32,7 @@ export default function SessionScreen() {
   const [sessionId, setSessionId] = useState<string>('');
   const [bootError, setBootError] = useState<{ code: string; message: string } | null>(null);
   const [reshoot, setReshoot] = useState(false);
+  const [journeyOpen, setJourneyOpen] = useState(false);
 
   const cameraRef = useRef<CameraView | null>(null);
   const lastFrameRef = useRef<string | null>(null);
@@ -66,9 +71,9 @@ export default function SessionScreen() {
     }
   }, [lang, live]);
 
-  // 카메라 권한 확보되면 1회 부트.
+  // 카메라 권한 확보 시 1회 부트. mock 모드는 카메라 없이도(시뮬레이터/웹) 부트.
   useEffect(() => {
-    if (camPermission?.granted && !startedRef.current) {
+    if ((camPermission?.granted || USE_MOCK) && !startedRef.current) {
       startedRef.current = true;
       void boot();
     }
@@ -77,8 +82,10 @@ export default function SessionScreen() {
   const onCapture = useCallback(async () => {
     const frame = await captureFrame(cameraRef.current);
     if (frame) {
-      lastFrameRef.current = frame;
-      live.pushFrame(frame); // 모델에 즉시 전달 → recognize_document 유도
+      lastFrameRef.current = frame; // 모델에 즉시 전달 → recognize_document 유도
+      live.pushFrame(frame);
+    } else if (USE_MOCK) {
+      live.pushFrame(''); // mock: 실제 프레임 없이도 인식 플로우 트리거(시뮬레이터/웹)
     }
   }, [live]);
 
@@ -91,7 +98,8 @@ export default function SessionScreen() {
   if (!camPermission) {
     return <StateView state="loading" message={t('state.loading')} />;
   }
-  if (!camPermission.granted) {
+  // mock 모드에서는 카메라 권한 없이도 진행(시뮬레이터/웹 테스트). 실모드만 게이트.
+  if (!camPermission.granted && !USE_MOCK) {
     return (
       <StateView
         state="no-permission"
@@ -120,7 +128,13 @@ export default function SessionScreen() {
 
   return (
     <View style={styles.container}>
-      <CameraView ref={cameraRef} style={StyleSheet.absoluteFill} facing="back" />
+      {camPermission.granted ? (
+        <CameraView ref={cameraRef} style={StyleSheet.absoluteFill} facing="back" />
+      ) : (
+        <View style={[StyleSheet.absoluteFill, styles.cameraPlaceholder]}>
+          <Text style={styles.placeholderText}>📄</Text>
+        </View>
+      )}
 
       <ConnectionOverlay
         status={live.status}
@@ -130,9 +144,16 @@ export default function SessionScreen() {
 
       <View style={[styles.topBar, { paddingTop: insets.top + spacing.sm }]}>
         <AudioVisualizer status={live.status} />
-        <Pressable style={styles.endButton} onPress={onEnd} accessibilityRole="button">
-          <Text style={styles.endText}>{t('session.end')}</Text>
-        </Pressable>
+        <View style={styles.topRight}>
+          {USE_MOCK ? (
+            <View style={styles.mockBadge}>
+              <Text style={styles.mockText}>MOCK</Text>
+            </View>
+          ) : null}
+          <Pressable style={styles.endButton} onPress={onEnd} accessibilityRole="button">
+            <Text style={styles.endText}>{t('session.end')}</Text>
+          </Pressable>
+        </View>
       </View>
 
       <View style={styles.center} pointerEvents="none">
@@ -140,34 +161,60 @@ export default function SessionScreen() {
       </View>
 
       <View style={[styles.bottom, { paddingBottom: insets.bottom + spacing.md }]}>
+        {/* A — 민원 여정: 서류 인식되면 등장 */}
+        {live.journey ? (
+          <Pressable
+            style={styles.journeyBtn}
+            onPress={() => setJourneyOpen(true)}
+            accessibilityRole="button"
+          >
+            <Text style={styles.journeyBtnText}>🧭 {a.viewJourney}</Text>
+            <Text style={styles.journeyBtnCount}>{live.journey.steps.length}</Text>
+          </Pressable>
+        ) : null}
+
+        <SuggestionChips onAsk={live.sendText} />
         <KnowledgePanel transcripts={live.transcripts} hint={t('session.aimAtDocument')} />
         <Pressable style={styles.shutter} onPress={() => void onCapture()} accessibilityRole="button">
           <View style={styles.shutterInner} />
         </Pressable>
       </View>
+
+      <JourneyPanel journey={live.journey} visible={journeyOpen} onClose={() => setJourneyOpen(false)} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000' },
+  cameraPlaceholder: { backgroundColor: colors.text, alignItems: 'center', justifyContent: 'center' },
+  placeholderText: { fontSize: 80, opacity: 0.35 },
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: spacing.md,
   },
+  topRight: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  mockBadge: {
+    backgroundColor: 'rgba(255,255,255,0.92)',
+    paddingVertical: 4,
+    paddingHorizontal: spacing.sm,
+    borderRadius: radius.sm,
+  },
+  mockText: { color: colors.text, fontSize: fontSize.sm, fontWeight: '800', letterSpacing: 1 },
   endButton: {
     backgroundColor: colors.overlay,
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.lg,
     borderRadius: radius.pill,
   },
-  endText: { color: colors.text, fontSize: fontSize.md, fontWeight: '700' },
+  endText: { color: colors.onOverlay, fontSize: fontSize.md, fontWeight: '700' },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   aimHint: {
-    color: colors.text,
+    color: colors.onOverlay,
     fontSize: fontSize.md,
+    fontWeight: '600',
     backgroundColor: colors.overlay,
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.md,
@@ -175,15 +222,38 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     textAlign: 'center',
   },
-  bottom: { gap: spacing.md, alignItems: 'center' },
+  bottom: { gap: spacing.sm, alignItems: 'stretch' },
+  journeyBtn: {
+    alignSelf: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    backgroundColor: colors.primary,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    borderRadius: radius.pill,
+  },
+  journeyBtnText: { color: colors.primaryText, fontSize: fontSize.md, fontWeight: '800' },
+  journeyBtnCount: {
+    color: colors.primary,
+    backgroundColor: colors.onOverlay,
+    fontSize: fontSize.sm,
+    fontWeight: '800',
+    minWidth: 20,
+    textAlign: 'center',
+    borderRadius: radius.pill,
+    paddingHorizontal: 6,
+    overflow: 'hidden',
+  },
   shutter: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
+    alignSelf: 'center',
+    width: 76,
+    height: 76,
+    borderRadius: 38,
     borderWidth: 4,
-    borderColor: colors.text,
+    borderColor: colors.onOverlay,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  shutterInner: { width: 54, height: 54, borderRadius: 27, backgroundColor: colors.text },
+  shutterInner: { width: 58, height: 58, borderRadius: 29, backgroundColor: colors.onOverlay },
 });

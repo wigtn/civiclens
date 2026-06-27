@@ -6,7 +6,7 @@ import type { RecordEntry } from '@contract/api';
 import { useI18n } from '@/i18n/context';
 import { apiClient, ApiClientError } from '@/lib/api-client';
 import { StateView } from '@/components/StateView';
-import { colors, fontSize, radius, spacing } from '@/theme';
+import { colors, fontSize, radius, shadows, spacing } from '@/theme';
 
 // 로그인/인증은 B 소유 — 여기서는 author 권한이 있다고 가정. false 면 no-permission 경로 시연.
 const HAS_ACCESS = true;
@@ -67,8 +67,16 @@ export default function MyRecordsScreen() {
 
 const styles = StyleSheet.create({
   list: { backgroundColor: colors.bg },
-  content: { padding: spacing.md, gap: spacing.sm },
-  card: { backgroundColor: colors.surface, borderRadius: radius.md, padding: spacing.md, gap: spacing.xs },
-  cardTitle: { color: colors.text, fontSize: fontSize.lg, fontWeight: '700' },
+  content: { padding: spacing.md, gap: spacing.md },
+  card: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.lg,
+    gap: spacing.xs,
+    ...shadows.card,
+  },
+  cardTitle: { color: colors.text, fontSize: fontSize.lg, fontWeight: '800' },
   cardMeta: { color: colors.textMuted, fontSize: fontSize.sm },
 });

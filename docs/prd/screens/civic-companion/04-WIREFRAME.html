@@ -1,0 +1,395 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CivicLens — Wireframe (lo-fi)</title>
+<style>
+  /* lo-fi: 흑백 + 의미색만. 브랜드/타이포/액센트 컬러 없음(screen-spec Rule 3). */
+  :root{
+    --ink:#1a1a1a; --g1:#333; --g2:#666; --g3:#999; --g4:#c4c4c4; --g5:#e4e4e4; --g6:#f3f3f3; --paper:#fff;
+    --error:#b3261e; --success:#1e7d34; --warn:#9a6a00; --info:#28557a; /* 의미색 only */
+    --frameW:300px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+       background:var(--g6);color:var(--ink);line-height:1.45}
+  header.top{position:sticky;top:0;z-index:10;background:var(--paper);border-bottom:1px solid var(--g4);
+       padding:14px 20px}
+  header.top h1{margin:0;font-size:18px}
+  header.top p{margin:4px 0 10px;color:var(--g2);font-size:13px}
+  nav{display:flex;flex-wrap:wrap;gap:8px}
+  nav a{font-size:12px;text-decoration:none;color:var(--ink);border:1px solid var(--g3);
+       border-radius:999px;padding:4px 12px;background:var(--paper)}
+  nav a:hover{background:var(--g6)}
+  .legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:10px;font-size:11px;color:var(--g2)}
+  .legend span{display:inline-flex;align-items:center;gap:5px}
+  .swatch{width:11px;height:11px;border-radius:3px;border:1px solid var(--g4)}
+  main{padding:24px 20px 80px;max-width:1320px;margin:0 auto}
+  section.screen{margin:34px 0;scroll-margin-top:120px}
+  .screen-head{border-left:4px solid var(--ink);padding-left:12px;margin-bottom:6px}
+  .screen-head h2{margin:0;font-size:17px}
+  .screen-head .route{font-family:ui-monospace,Menlo,monospace;font-size:12px;color:var(--g2)}
+  .screen-head .meta{font-size:12px;color:var(--g2);margin-top:3px}
+  .frames{display:flex;flex-wrap:wrap;gap:22px;margin-top:16px}
+  /* device frame */
+  .phone{width:var(--frameW);background:var(--paper);border:1.5px solid var(--g1);border-radius:26px;
+       overflow:hidden;box-shadow:0 1px 0 var(--g4)}
+  .statusbar{height:24px;background:var(--g6);display:flex;align-items:center;justify-content:space-between;
+       padding:0 14px;font-size:10px;color:var(--g3);border-bottom:1px solid var(--g5)}
+  .scr{height:520px;display:flex;flex-direction:column;padding:14px;gap:10px;position:relative}
+  .state-tag{align-self:flex-start;font-size:10px;letter-spacing:.04em;text-transform:uppercase;
+       border:1px solid var(--g3);border-radius:4px;padding:1px 7px;color:var(--g1);background:var(--g6)}
+  .state-tag.loading{border-color:var(--info);color:var(--info)}
+  .state-tag.empty{border-color:var(--g3);color:var(--g2)}
+  .state-tag.error{border-color:var(--error);color:var(--error)}
+  .state-tag.success{border-color:var(--success);color:var(--success)}
+  .state-tag.noperm{border-color:var(--warn);color:var(--warn)}
+  /* sketch primitives */
+  .bar{height:12px;background:var(--g5);border-radius:3px}
+  .bar.lg{height:26px}.bar.sm{height:8px}
+  .bar.w70{width:70%}.bar.w50{width:50%}.bar.w40{width:40%}.bar.w85{width:85%}.bar.w30{width:30%}
+  .label{font-size:12px;color:var(--g1);font-weight:600}
+  .muted{font-size:11px;color:var(--g3)}
+  .box{border:1px dashed var(--g4);border-radius:8px;padding:10px;display:flex;flex-direction:column;gap:8px}
+  .box.solid{border-style:solid}
+  .chips{display:flex;flex-wrap:wrap;gap:6px}
+  .chip{border:1px solid var(--g3);border-radius:999px;padding:5px 11px;font-size:11px;color:var(--g1)}
+  .chip.sel{border-color:var(--ink);border-width:2px;font-weight:700}
+  .btn{border:1.5px solid var(--ink);border-radius:999px;padding:11px;text-align:center;font-size:13px;
+       font-weight:700;color:var(--ink)}
+  .btn.block{width:100%}
+  .btn.ghost{border-color:var(--g3);color:var(--g2);font-weight:600}
+  .btn.sm{padding:6px 12px;font-size:11px;border-radius:8px;border-width:1px}
+  .spacer{flex:1}
+  .center{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center}
+  .glyph{font-size:34px;color:var(--g3)}
+  .spinner{width:30px;height:30px;border:3px solid var(--g4);border-top-color:var(--info);border-radius:50%}
+  /* camera surface */
+  .camera{flex:1;background:repeating-linear-gradient(45deg,var(--g5),var(--g5) 8px,var(--g6) 8px,var(--g6) 16px);
+       border-radius:10px;position:relative;display:flex;flex-direction:column;overflow:hidden}
+  .cam-top{display:flex;align-items:center;justify-content:space-between;padding:8px}
+  .viz{display:flex;gap:3px;align-items:flex-end}
+  .viz i{width:5px;background:var(--g2);border-radius:2px}
+  .cam-center{flex:1;display:flex;align-items:center;justify-content:center}
+  .pill{background:rgba(0,0,0,.65);color:#fff;font-size:11px;padding:5px 10px;border-radius:8px}
+  .overlay{position:absolute;inset:0;background:rgba(0,0,0,.55);display:flex;flex-direction:column;
+       align-items:center;justify-content:center;gap:10px;color:#fff;text-align:center;padding:18px}
+  .overlay .glyph{color:#fff}
+  .shutter{width:48px;height:48px;border-radius:50%;border:4px solid var(--g1);align-self:center;margin-top:6px}
+  .bubble{max-width:84%;border:1px solid var(--g4);border-radius:10px;padding:7px 9px;font-size:11px}
+  .bubble.ai{align-self:flex-start;background:var(--g6)}
+  .bubble.me{align-self:flex-end;background:var(--paper)}
+  .tagm{font-size:9px;color:var(--g3);margin-bottom:2px}
+  .row{display:flex;justify-content:space-between;align-items:center;border:1px solid var(--g5);
+       border-radius:8px;padding:9px 10px}
+  .card{border:1px solid var(--g4);border-radius:10px;padding:11px;display:flex;flex-direction:column;gap:7px}
+  .hero{border:1.5px solid var(--g1);border-radius:12px;padding:16px;text-align:center;display:flex;
+       flex-direction:column;gap:4px}
+  .hero .big{font-size:30px;font-weight:800}
+  .note{font-size:10px;color:var(--g2);border-top:1px dashed var(--g4);padding-top:6px;margin-top:2px}
+  .flowwrap{background:var(--paper);border:1px solid var(--g4);border-radius:10px;padding:14px;overflow:auto}
+  .flow{font-family:ui-monospace,Menlo,monospace;font-size:11px;color:var(--g1);white-space:pre;margin:0}
+  footer{color:var(--g3);font-size:11px;text-align:center;padding:30px}
+</style>
+</head>
+<body>
+<header class="top">
+  <h1>CivicLens — Wireframe <span style="color:var(--g3);font-weight:400">lo-fi · mobile (iOS/Android)</span></h1>
+  <p>외국인·디지털약자 민원동행 AI · 흑백 + 의미색만(브랜드/스타일 제외) · 출처: PRD §5.4 / §5.4.1 / §5.5</p>
+  <nav>
+    <a href="#s-index">/ 랜딩</a>
+    <a href="#s-session">/session</a>
+    <a href="#s-my">/my</a>
+    <a href="#s-record">/record/[id]</a>
+    <a href="#s-benchmark">/benchmark</a>
+    <a href="#s-flow">User Flow</a>
+  </nav>
+  <div class="legend">
+    <span><i class="swatch" style="background:var(--info)"></i>loading</span>
+    <span><i class="swatch" style="background:var(--g3)"></i>empty</span>
+    <span><i class="swatch" style="background:var(--error)"></i>error</span>
+    <span><i class="swatch" style="background:var(--success)"></i>success</span>
+    <span><i class="swatch" style="background:var(--warn)"></i>no-permission</span>
+    <span style="color:var(--g3)">— 의미색만, 그 외는 무채색</span>
+  </div>
+</header>
+
+<main>
+
+<!-- ============ / 랜딩 ============ -->
+<section class="screen" id="s-index">
+  <div class="screen-head">
+    <h2>랜딩 · 언어 선택</h2>
+    <div class="route">app/index</div>
+    <div class="meta">Audience: guest, author · Auth: Optional · FR-007 · States: success</div>
+  </div>
+  <div class="frames">
+    <!-- success -->
+    <div class="phone">
+      <div class="statusbar"><span>9:41</span><span>▮▮▮ 100%</span></div>
+      <div class="scr">
+        <span class="state-tag success">success</span>
+        <div style="display:flex;align-items:center;gap:7px">
+          <div style="width:12px;height:12px;border-radius:50%;background:var(--g3)"></div>
+          <span class="muted">CivicLens</span>
+        </div>
+        <div class="bar lg w85"></div>
+        <div class="bar lg w50"></div>
+        <div class="bar sm w70" style="margin-top:2px"></div>
+        <div class="box" style="margin-top:6px">
+          <span class="label" style="text-align:center">언어를 선택하세요</span>
+          <div class="chips" style="justify-content:center">
+            <span class="chip sel">한국어</span><span class="chip">EN</span>
+            <span class="chip">中文</span><span class="chip">Tiếng Việt</span><span class="chip">ไทย</span>
+          </div>
+        </div>
+        <div class="spacer"></div>
+        <div class="btn block">시작하기 →</div>
+        <div class="chips" style="justify-content:center;margin-top:2px">
+          <span class="chip">내 민원 기록</span><span class="chip">정확도</span>
+        </div>
+        <div class="note">microcopy: 제목/부제 = "민원, 같이 해요" / 카메라·음성 안내. 언어칩 5종(FR-007), 기본 ko 선택.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ /session ============ -->
+<section class="screen" id="s-session">
+  <div class="screen-head">
+    <h2>실시간 동행 세션</h2>
+    <div class="route">app/session</div>
+    <div class="meta">Audience: guest, author · Auth: Optional · FR-001~011, FR-014 · States: loading / success / error / no-permission</div>
+  </div>
+  <div class="frames">
+    <!-- loading -->
+    <div class="phone"><div class="statusbar"><span>9:41</span><span>▮▮▮</span></div>
+      <div class="scr">
+        <span class="state-tag loading">loading</span>
+        <div class="camera">
+          <div class="overlay"><div class="spinner"></div><div>연결 중…</div></div>
+        </div>
+        <div class="note">Realtime WS 연결 중. 카메라 프리뷰 위 오버레이 + 스피너.</div>
+      </div>
+    </div>
+    <!-- success -->
+    <div class="phone"><div class="statusbar"><span>9:41</span><span>▮▮▮</span></div>
+      <div class="scr">
+        <span class="state-tag success">success</span>
+        <div class="camera">
+          <div class="cam-top">
+            <div class="viz"><i style="height:10px"></i><i style="height:18px"></i><i style="height:13px"></i><i style="height:20px"></i><i style="height:9px"></i></div>
+            <div style="display:flex;gap:5px">
+              <span class="pill" style="background:rgba(0,0,0,.4)">MOCK</span>
+              <span class="pill">종료</span>
+            </div>
+          </div>
+          <div class="cam-center"><span class="pill">서류를 비춰 주세요</span></div>
+        </div>
+        <div class="box solid" style="gap:6px">
+          <div class="bubble ai"><div class="tagm">AI</div>전입신고서 같아요. "세대주" 칸부터 볼게요.</div>
+          <div class="bubble me"><div class="tagm">나</div>세대주가 뭐예요?</div>
+        </div>
+        <div class="shutter"></div>
+        <div class="note">상단: 음성 비주얼라이저 + 종료. 중앙: 조준 안내. 하단: 전사 패널 + 셔터. FR-003/004/005 진행.</div>
+      </div>
+    </div>
+    <!-- error -->
+    <div class="phone"><div class="statusbar"><span>9:41</span><span>▮▮▮</span></div>
+      <div class="scr">
+        <span class="state-tag error">error</span>
+        <div class="camera">
+          <div class="overlay">
+            <div class="glyph">⚠</div>
+            <div>문제가 생겼어요.<br>잠시 후 다시 시도해 주세요.</div>
+            <div class="btn sm" style="border-color:#fff;color:#fff">다시 시도</div>
+          </div>
+        </div>
+        <div class="note">연결 실패/RATE_LIMITED/BUDGET_EXCEEDED 분기 카피. 재시도 CTA. (FR-016 한도 초과 시 "오늘 사용량이 가득 찼어요")</div>
+      </div>
+    </div>
+    <!-- no-permission -->
+    <div class="phone"><div class="statusbar"><span>9:41</span><span>▮▮▮</span></div>
+      <div class="scr">
+        <span class="state-tag noperm">no-permission</span>
+        <div class="center">
+          <div class="glyph">🔒</div>
+          <span class="label">카메라·마이크 권한이 필요해요</span>
+          <span class="muted">설정에서 허용해 주세요.</span>
+          <div class="btn">권한 허용</div>
+        </div>
+        <div class="note">카메라/마이크 거부 시. 허용 버튼 → OS 권한 재요청. (실모드만; mock은 권한 없이 진행)</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ /my ============ -->
+<section class="screen" id="s-my">
+  <div class="screen-head">
+    <h2>민원 기록 목록</h2>
+    <div class="route">app/my</div>
+    <div class="meta">Audience: author · Auth: Required · FR-009 · States: loading / empty / error / success / no-permission</div>
+  </div>
+  <div class="frames">
+    <!-- loading -->
+    <div class="phone"><div class="statusbar"><span>9:41</span><span>▮▮▮</span></div>
+      <div class="scr"><span class="state-tag loading">loading</span>
+        <div class="center"><div class="spinner"></div><span class="muted">불러오는 중…</span></div>
+      </div>
+    </div>
+    <!-- empty -->
+    <div class="phone"><div class="statusbar"><span>9:41</span><span>▮▮▮</span></div>
+      <div class="scr"><span class="state-tag empty">empty</span>
+        <div class="center"><div class="glyph">🗂️</div>
+          <span class="label">아직 기록이 없어요</span>
+          <span class="muted">첫 민원을 함께 해봐요.</span>
+        </div>
+        <div class="note">Record 0건. 텍스트 + (옵션)시작 CTA.</div>
+      </div>
+    </div>
+    <!-- success -->
+    <div class="phone"><div class="statusbar"><span>9:41</span><span>▮▮▮</span></div>
+      <div class="scr"><span class="state-tag success">success</span>
+        <span class="label">내 민원 기록</span>
+        <div class="card"><div class="bar w70"></div><div class="bar sm w50"></div></div>
+        <div class="card"><div class="bar w50"></div><div class="bar sm w40"></div></div>
+        <div class="card"><div class="bar w85"></div><div class="bar sm w40"></div></div>
+        <div class="note">카드 = docTypeId + 날짜·언어·방문수. 탭 → /record/[id].</div>
+      </div>
+    </div>
+    <!-- error -->
+    <div class="phone"><div class="statusbar"><span>9:41</span><span>▮▮▮</span></div>
+      <div class="scr"><span class="state-tag error">error</span>
+        <div class="center"><div class="glyph" style="color:var(--error)">⚠</div>
+          <span class="label">문제가 생겼어요</span><span class="muted">잠시 후 다시 시도해 주세요.</span>
+          <div class="btn sm">다시 시도</div></div>
+      </div>
+    </div>
+    <!-- no-permission -->
+    <div class="phone"><div class="statusbar"><span>9:41</span><span>▮▮▮</span></div>
+      <div class="scr"><span class="state-tag noperm">no-permission</span>
+        <div class="center"><div class="glyph">🔒</div>
+          <span class="label">접근 권한이 없어요</span>
+          <span class="muted">로그인이 필요합니다.</span></div>
+        <div class="note">비로그인 접근. (인증은 백엔드 B 소유)</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ /record/[id] ============ -->
+<section class="screen" id="s-record">
+  <div class="screen-head">
+    <h2>기록 상세</h2>
+    <div class="route">app/record/[id]</div>
+    <div class="meta">Audience: author · Auth: Required · FR-009 · States: loading / error / success / no-permission(403)</div>
+  </div>
+  <div class="frames">
+    <div class="phone"><div class="statusbar"><span>9:41</span><span>▮▮▮</span></div>
+      <div class="scr"><span class="state-tag loading">loading</span>
+        <div class="center"><div class="spinner"></div><span class="muted">불러오는 중…</span></div></div>
+    </div>
+    <div class="phone"><div class="statusbar"><span>9:41</span><span>▮▮▮</span></div>
+      <div class="scr"><span class="state-tag success">success</span>
+        <span class="muted">2026-06-27 · KO</span>
+        <div class="card">
+          <div class="bar w50"></div>
+          <span class="muted">안내받은 항목</span>
+          <div class="bar sm w70"></div><div class="bar sm w40"></div>
+        </div>
+        <div class="card"><div class="bar w40"></div><div class="bar sm w85"></div></div>
+        <div class="note">비식별 구조화 필드만: docTypeId · guidedFieldKeys · noteSafe(PII 마스킹 통과). FR-015.</div>
+      </div>
+    </div>
+    <div class="phone"><div class="statusbar"><span>9:41</span><span>▮▮▮</span></div>
+      <div class="scr"><span class="state-tag error">error</span>
+        <div class="center"><div class="glyph" style="color:var(--error)">⚠</div>
+          <span class="label">문제가 생겼어요</span><div class="btn sm">다시 시도</div></div></div>
+    </div>
+    <div class="phone"><div class="statusbar"><span>9:41</span><span>▮▮▮</span></div>
+      <div class="scr"><span class="state-tag noperm">no-permission</span>
+        <div class="center"><div class="glyph">🔒</div>
+          <span class="label">접근 권한이 없어요</span>
+          <span class="muted">타인의 기록입니다 (403).</span></div>
+        <div class="note">FORBIDDEN/UNAUTHORIZED → no-permission, 그 외 → error.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ /benchmark ============ -->
+<section class="screen" id="s-benchmark">
+  <div class="screen-head">
+    <h2>정확도 대시보드</h2>
+    <div class="route">app/benchmark</div>
+    <div class="meta">Audience: admin · Auth: Required · FR-012 · States: loading / empty / error / success / no-permission</div>
+  </div>
+  <div class="frames">
+    <div class="phone"><div class="statusbar"><span>9:41</span><span>▮▮▮</span></div>
+      <div class="scr"><span class="state-tag loading">loading</span>
+        <div class="center"><div class="spinner"></div><span class="muted">불러오는 중…</span></div></div>
+    </div>
+    <div class="phone"><div class="statusbar"><span>9:41</span><span>▮▮▮</span></div>
+      <div class="scr"><span class="state-tag empty">empty</span>
+        <div class="center"><div class="glyph">🗂️</div><span class="muted">평가 데이터가 없어요</span></div></div>
+    </div>
+    <div class="phone"><div class="statusbar"><span>9:41</span><span>▮▮▮</span></div>
+      <div class="scr"><span class="state-tag success">success</span>
+        <div class="hero"><span class="muted">서식 인식 정확도</span><span class="big">94.0%</span><span class="muted">mock-2026.06</span></div>
+        <span class="muted">By document type</span>
+        <div class="row"><span class="muted">move_in_report</span><span class="label">96% · n=120</span></div>
+        <div class="row"><span class="muted">resident_reg</span><span class="label">93% · n=110</span></div>
+        <span class="muted">Translation BLEU</span>
+        <div class="row"><span class="muted">EN</span><span class="label">0.41</span></div>
+        <div class="row"><span class="muted">KO</span><span class="label">—</span></div>
+        <div class="note">히어로 = overallTop1. 문서종류별/언어별 표. 정답쌍 없으면 BLEU "—"(null).</div>
+      </div>
+    </div>
+    <div class="phone"><div class="statusbar"><span>9:41</span><span>▮▮▮</span></div>
+      <div class="scr"><span class="state-tag error">error</span>
+        <div class="center"><div class="glyph" style="color:var(--error)">⚠</div>
+          <span class="label">문제가 생겼어요</span><div class="btn sm">다시 시도</div></div></div>
+    </div>
+    <div class="phone"><div class="statusbar"><span>9:41</span><span>▮▮▮</span></div>
+      <div class="scr"><span class="state-tag noperm">no-permission</span>
+        <div class="center"><div class="glyph">🔒</div>
+          <span class="label">관리자만 볼 수 있어요</span></div>
+        <div class="note">admin 아니면 no-permission.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ User Flow ============ -->
+<section class="screen" id="s-flow">
+  <div class="screen-head">
+    <h2>User Flow</h2>
+    <div class="route">PRD §5.5</div>
+    <div class="meta">진입 → 언어선택 → 권한 → 세션 → 인식/안내 → 기록</div>
+  </div>
+  <div class="flowwrap">
+<pre class="flow">진입 ─▶ [/ 랜딩·언어선택]
+          │ 언어 선택 + 시작
+          ▼
+      {카메라·마이크 권한}
+        ├─ 거부 ─▶ (session: no-permission)
+        └─ 허용 ─▶ [/session 실시간 동행]
+                     │ 서류 비춤 + 음성질문
+                     ▼
+                 {recognize_document}
+                   ├─ confidence &lt; 0.5 ─▶ 재촬영 유도(단정 금지, FR-014)
+                   └─ 인식 성공 ─▶ 칸별 작성법 모국어 음성
+                                    ├─ 행정용어 ─▶ lookup_admin_term (AI Hub grounding)
+                                    ├─ 키오스크 ─▶ 버튼 위치 음성 안내(FR-010)
+                                    └─ 종료 ─▶ create_record
+                                                 ▼
+                                        [/my 기록목록] ─▶ [/record/:id 상세]</pre>
+  </div>
+</section>
+
+<footer>CivicLens lo-fi wireframe · 구조 검토용 · 색/타이포/브랜드는 별도 단계(/implement)에서 적용</footer>
+</main>
+</body>
+</html>

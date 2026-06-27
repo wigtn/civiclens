@@ -5,7 +5,7 @@ import type { BenchmarkResponse } from '@contract/api';
 import { useI18n } from '@/i18n/context';
 import { apiClient } from '@/lib/api-client';
 import { StateView } from '@/components/StateView';
-import { colors, fontSize, radius, spacing } from '@/theme';
+import { colors, fontSize, radius, shadows, spacing } from '@/theme';
 
 // admin 게이트는 B 소유 — 여기서는 true 가정. false 면 no-permission 시연.
 const IS_ADMIN = true;
@@ -79,24 +79,29 @@ const styles = StyleSheet.create({
   content: { padding: spacing.md, gap: spacing.sm },
   hero: {
     backgroundColor: colors.surface,
-    borderRadius: radius.lg,
+    borderRadius: radius.xl,
+    borderWidth: 1.5,
+    borderColor: colors.text,
     padding: spacing.xl,
     alignItems: 'center',
     gap: spacing.xs,
     marginBottom: spacing.md,
+    ...shadows.card,
   },
-  heroLabel: { color: colors.textMuted, fontSize: fontSize.md },
-  heroValue: { color: colors.success, fontSize: fontSize.xxl, fontWeight: '800' },
+  heroLabel: { color: colors.textMuted, fontSize: fontSize.md, fontWeight: '600' },
+  heroValue: { color: colors.text, fontSize: fontSize.xxl, fontWeight: '800' },
   heroMeta: { color: colors.textMuted, fontSize: fontSize.sm },
-  sectionTitle: { color: colors.text, fontSize: fontSize.md, fontWeight: '700', marginTop: spacing.md },
+  sectionTitle: { color: colors.text, fontSize: fontSize.md, fontWeight: '800', marginTop: spacing.md },
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     backgroundColor: colors.surface,
-    borderRadius: radius.sm,
-    paddingVertical: spacing.sm,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingVertical: spacing.md,
     paddingHorizontal: spacing.md,
   },
-  rowLabel: { color: colors.text, fontSize: fontSize.md },
-  rowValue: { color: colors.textMuted, fontSize: fontSize.md },
+  rowLabel: { color: colors.text, fontSize: fontSize.md, fontWeight: '600' },
+  rowValue: { color: colors.accent, fontSize: fontSize.md, fontWeight: '700' },
 });

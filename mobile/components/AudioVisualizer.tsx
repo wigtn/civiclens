@@ -31,7 +31,8 @@ export function AudioVisualizer({ status }: Props) {
     return () => animations.forEach((a) => a.stop());
   }, [active, values]);
 
-  const color = status === 'speaking' ? colors.primary : colors.success;
+  // 카메라(어두운 배경) 위: AI 발화는 흰색, 사용자 발화는 의미색(녹색).
+  const color = status === 'speaking' ? colors.onOverlay : colors.success;
 
   return (
     <View style={styles.row} accessibilityElementsHidden>
