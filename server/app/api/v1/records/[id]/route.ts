@@ -19,18 +19,17 @@ export function OPTIONS(req: NextRequest) {
 export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   const origin = req.headers.get('origin');
 
+  // 로컬/게스트 데모: 세션 토큰은 선택(mobile api-client.getRecord 는 토큰 미전송).
+  // 토큰이 있으면 본인 세션 소유 검증(타 세션 403), 없으면 로컬 단일 디바이스로 허용.
+  // ⚠️ 프로덕션(author, FR-009)에서는 토큰 필수 + 소유 검증으로 강화 필요.
   const claims = verifySessionToken(extractSessionToken(req));
-  if (!claims) {
-    return fail('UNAUTHORIZED', { message: '유효한 세션 토큰이 필요합니다.', origin });
-  }
 
   const { id } = await ctx.params;
   const rec = getRecord(id);
   if (!rec) {
     return fail('NOT_FOUND', { origin });
   }
-  // 본인 세션 소유 검증(guest=세션 단위 소유)
-  if (rec.sessionId !== claims.sessionId) {
+  if (claims && rec.sessionId !== claims.sessionId) {
     return fail('FORBIDDEN', { origin });
   }
 
