@@ -57,6 +57,15 @@ async function loadNormalized(): Promise<NormalizedTerm[]> {
     t('damdangja', '담당자', '해당 업무를 처리하는 직원.', 'person in charge', 'người phụ trách', '负责人', 'ผู้รับผิดชอบ'),
     t('sihaeng_ilja', '시행일자', '문서의 효력이 시작되는 날짜.', 'effective date', 'ngày thi hành', '施行日期', 'วันที่มีผลบังคับใช้'),
     t('munseo_beonho', '문서번호', '행정문서에 부여된 고유 번호.', 'document number', 'số văn bản', '文件编号', 'เลขที่เอกสาร'),
+    // 공통 민원 서식 칸 용어(여러 서식에 두루 등장)
+    t('sojaeji', '소재지', '토지·건물이 위치한 주소.', 'location (site address)', 'địa chỉ/vị trí', '所在地', 'ที่ตั้ง'),
+    t('sincheongin', '신청인', '신청서를 제출하는 사람.', 'applicant', 'người nộp đơn', '申请人', 'ผู้ยื่นคำขอ'),
+    t('yeollakcheo', '연락처', '연락 가능한 전화번호 등.', 'contact (phone number)', 'thông tin liên lạc', '联系方式', 'ข้อมูลติดต่อ'),
+    t('bigo', '비고', '추가로 적는 참고 사항.', 'remarks / notes', 'ghi chú', '备注', 'หมายเหตุ'),
+    t('bosangaek', '보상액', '보상으로 지급되는 금액.', 'compensation amount', 'số tiền bồi thường', '补偿金额', 'จำนวนเงินชดเชย'),
+    t('jibeon', '지번', '토지에 부여된 필지 번호.', 'lot (parcel) number', 'số thửa đất', '地号', 'เลขที่ดิน'),
+    t('illyeonbeonho', '일련번호', '순서대로 매긴 고유 번호.', 'serial number', 'số sê-ri', '序列号', 'หมายเลขลำดับ'),
+    t('hyeobui_gigan', '협의기간', '협의를 진행하는 기간.', 'negotiation period', 'thời gian thương lượng', '协议期间', 'ระยะเวลาการเจรจา'),
   ];
 }
 
