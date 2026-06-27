@@ -221,7 +221,7 @@ Scenario: 민원 처리 기록 자동 생성
 #### `POST /api/v1/rag/query`
 - **Description**: 행정용어/다국어 매핑 RAG 검색. Realtime의 `lookup_admin_term`/`translate_notice` 도구 핸들러가 호출.
 - **Auth**: Required (세션 토큰 — §5.1 tool-call 인증 흐름 참조)
-- **Request**: `{ query: string (required), targetLang: string (required), topK?: number=5, source?: "admin_term"|"legal_translation"|"office" }`
+- **Request**: `{ query: string (required), targetLang: string (required), topK?: number=5, source?: "admin_term"|"legal_translation"|"multilingual_corpus" }`
 - **Response 200**: `{ matches: [{ term: string, definition: string, translation: string, sourceLabel: string, score: number }] }`
 - **Errors**: `400 INVALID_INPUT`, `404 NO_MATCH`, `500 RAG_FAILED (retryable)`
 
@@ -289,7 +289,7 @@ Record (Firestore/Postgres)
 
 AdminTermEmbedding (Vector Store)
   id: string
-  source: "admin_term"|"legal_translation"|"poi"
+  source: "admin_term"|"legal_translation"|"multilingual_corpus"
   term_ko: string
   translations: { en, zh, vi, th }
   definition: string
@@ -412,7 +412,13 @@ flowchart TD
 
 ### 6.3 AI Hub 적극 활용 — 3대 메커니즘 (심사 어필)
 
-1. **RAG 지식베이스(grounding)** — AI Hub *공공행정문서 OCR* 용어, *한국어-다국어 말뭉치*, *국내 법률 다국어 번역(5개국어)*, *관광 POI* 설명을 임베딩 → 벡터스토어. Realtime의 `lookup_admin_term`/`translate_notice`가 이를 검색해 **"환각 대신 국가 공인 데이터"** 로 답한다.
+1. **RAG 지식베이스(grounding)** — AI Hub **2개 데이터셋 + 말뭉치 보강**을 임베딩 → 벡터스토어:
+   - *공공행정문서 OCR* 행정용어 → `admin_term`
+   - *국내 법률 다국어 번역(5개국어)* → `legal_translation`
+   - *한국어-다국어 말뭉치* → `multilingual_corpus`(일반 문장 번역 grounding 보강)
+
+   Realtime의 `lookup_admin_term`/`translate_notice`가 이를 검색해 **"환각 대신 국가 공인 데이터"** 로 답한다.
+   > 관광 POI(도슨트 주제 잔재)는 제외. 인근 창구 안내(`discover_office`)는 RAG가 아니라 공공데이터포털/지도검색 API(offices/nearby, B 소유)로 처리.
 2. **인식 정확도 벤치마크(정량 증명)** — AI Hub *공공행정문서 OCR*의 문서종류/바운딩박스/OCR 정답을 평가셋으로 사용. `/recognize`의 top-1 분류 정확도를 산출해 **"서식 인식 정확도 OO%"** 를 `/benchmark` 대시보드에 표기. 데모에서 숫자가 곧 점수.
 3. **(여유 시) few-shot 프롬프트 주입** — 보행/공공서식 분류 샘플을 few-shot 예시로 시스템 프롬프트에 삽입. (P2, MVP 필수 아님)
 
