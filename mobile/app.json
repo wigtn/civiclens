@@ -1,0 +1,47 @@
+{
+  "expo": {
+    "name": "CivicLens",
+    "slug": "civiclens",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "civiclens",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.wigtn.civiclens",
+      "infoPlist": {
+        "NSCameraUsageDescription": "공문서·키오스크 화면을 인식해 작성법을 안내하기 위해 카메라를 사용합니다.",
+        "NSMicrophoneUsageDescription": "모국어 음성으로 질문하고 음성 안내를 받기 위해 마이크를 사용합니다.",
+        "NSLocationWhenInUseUsageDescription": "인근 주민센터·무인민원발급기를 안내하기 위해 위치를 사용합니다."
+      }
+    },
+    "android": {
+      "package": "com.wigtn.civiclens",
+      "permissions": [
+        "CAMERA",
+        "RECORD_AUDIO",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION"
+      ]
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-camera",
+        { "cameraPermission": "공문서 인식을 위해 카메라 접근이 필요합니다." }
+      ],
+      [
+        "expo-audio",
+        { "microphonePermission": "음성 안내를 위해 마이크 접근이 필요합니다." }
+      ],
+      [
+        "expo-location",
+        { "locationWhenInUsePermission": "인근 민원 창구 안내를 위해 위치 접근이 필요합니다." }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
